@@ -1,6 +1,8 @@
 import java.io.*;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.util.Scanner;
 import java.util.Random;
 
@@ -38,6 +40,15 @@ public class World
 		JButton left = new JButton("LEFT");
 		JButton down = new JButton("DOWN");
 		JButton right = new JButton("RIGHT");
+
+		exit.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				System.exit(0);
+			}
+		});
 
 		ui.add(exit);
 		ui.add(save);
@@ -178,6 +189,11 @@ public class World
 		window.repaint();
 	}
 
+	private char getInput()
+	{
+		return 'i';
+	}
+
 	public void drawSingle(Point position, String path, String description)
 	{
 		java.net.URL imgURL = getClass().getResource(path);
@@ -204,22 +220,73 @@ public class World
 
 		while (true)
 		{
+			char input = getInput();
+			if (input == 'i')
+				continue;
+			if (input == 'q')
+				return;
+			if (input == 's')
+			{
+				try
+				{
+					saveToFile();
+				}
+				catch (IOException e)
+				{
+					System.err.println("Caught IOException: " + e.getMessage());
+				}
+				continue;
+			}
+			if (input == 'f')
+			{
+				try
+				{
+					loadFile();
+				}
+				catch (IOException e)
+				{
+					System.err.println("Caught IOException: " + e.getMessage());
+				}
+				turnNumber = 0;
+				powerCounter = 0;
+				drawWorld(turnNumber);
+				continue;
+			}
+			if (input == 'p' && powerCounter > 0)
+				input = 'n';
+			if (input == 'p' && powerCounter == 0)
+			{
+				powerCounter = 11;
+			}
+
 			sortOrganisms();
 			for (int i = 0; i < width * height; ++i)
 			{
 				if (organisms[i] != null)
 				{
+					if (organisms[i] instanceof Human)
+					{
+						Human h = (Human)organisms[i];
+						h.toDo(input);
+						if (powerCounter == 5)
+							h.setSuperpower(false);
+					}
 					organisms[i].action();
 				}
 			}
-			try        
-			{
-			    Thread.sleep(100);
-			} 
-			catch(InterruptedException ex) 
-			{
-			    Thread.currentThread().interrupt();
-			};
+			if (powerCounter > 0)
+				--powerCounter;
+			++turnNumber;
+
+
+			//try        
+			//{
+			    //Thread.sleep(100);
+			//} 
+			//catch(InterruptedException ex) 
+			//{
+			    //Thread.currentThread().interrupt();
+			//};
 			drawWorld(turnNumber);
 		}
 	}
