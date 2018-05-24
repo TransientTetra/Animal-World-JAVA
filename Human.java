@@ -45,16 +45,16 @@ public class Human extends Animal
 		int dy = 0;
 		switch (doing) 
 		{
-			case 'u':
+			case 'l':
 				--dx;
 				break;
-			case 'd':
+			case 'r':
 				++dx;
 				break;
-			case 'l':
+			case 'u':
 				--dy;
 				break;
-			case 'r':
+			case 'd':
 				++dy;
 				break;
 			case 'p':
@@ -63,15 +63,19 @@ public class Human extends Animal
 		}
 		if (dx != 0 || dy != 0)
 		{
-			Point destination = position;
+			Point destination = new Point(position.x, position.y);
 			destination.x += dx;
 			destination.y += dy;
 
 			wrapPosition(destination);
 			if (world.getOrganism(destination) != null)
+			{
 				world.getOrganism(destination).collision(this);
+			}
 			else
+			{
 				position = destination;
+			}
 		}
 	}
 

@@ -1,3 +1,5 @@
+import java.io.*;
+
 public class Guarana extends Plant
 {
 	Guarana(World world, Point position)
@@ -9,6 +11,14 @@ public class Guarana extends Plant
 	@Override
 	public void fight(Organism other)
 	{
+	try
+	{
+		world.addToLog(other.species + " has eaten a guarana and gained +3 to it's power!");
+	}
+	catch (IOException ex)
+	{
+		System.err.println("Caught IOException: " + ex.getMessage());
+	}
 		other.setPower(other.getPower() + 3);
 		die();
 	}

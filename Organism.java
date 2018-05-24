@@ -1,8 +1,9 @@
 import java.util.Random;
+import java.io.*;
 
 public abstract class Organism
 {
-	protected String species;
+	public String species;
 	protected int power;
 	protected int age;
 	protected int initiative;
@@ -81,13 +82,23 @@ public abstract class Organism
 
 	public void fight(Organism other)
 	{
-		if (power > other.getPower())
+		try
 		{
-			other.die();
+			world.addToLog(species + " and " + other.species + " are fighting!");
+			if (power > other.getPower())
+			{
+				world.addToLog(species + " has won!");
+				other.die();
+			}
+			else
+			{
+				world.addToLog(other.species + " has won!");
+				die();
+			}
 		}
-		else
+		catch (IOException ex)
 		{
-			die();
+			System.err.println("Caught IOException: " + ex.getMessage());
 		}
 	}
 	
@@ -131,6 +142,14 @@ public abstract class Organism
 			if (world.getOrganism(temp) == null)
 			{
 				createNew(world.getFree(), temp);
+				try
+				{
+					world.addToLog(species + " has reproduced!");
+				}
+				catch (IOException ex)
+				{
+					System.err.println("Caught IOException: " + ex.getMessage());
+				}
 				return true;
 			}
 		}
@@ -140,9 +159,5 @@ public abstract class Organism
 	public void die()
 	{
 		world.removeOrganism(position);
-	}
-
-	public void name()
-	{
 	}
 }

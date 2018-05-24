@@ -1,3 +1,5 @@
+import java.io.*;
+
 public class Hogweed extends Plant
 {
 	Hogweed(World world, Point position)
@@ -20,6 +22,14 @@ public class Hogweed extends Plant
 			{
 				if (world.getOrganism(temp) instanceof Animal)
 				{
+					try
+					{
+						world.addToLog(world.getOrganism(temp).species + " has been burned by hogweed!");
+					}
+					catch (IOException ex)
+					{
+						System.err.println("Caught IOException: " + ex.getMessage());
+					}
 					world.getOrganism(temp).die();
 				}
 			}
@@ -29,6 +39,14 @@ public class Hogweed extends Plant
 	@Override
 	public void fight(Organism other)
 	{
+		try
+		{
+			world.addToLog(other.species + " tried eating hogweed and died!");
+		}
+		catch (IOException ex)
+		{
+			System.err.println("Caught IOException: " + ex.getMessage());
+		}
 		if (other.getPower() >= power)
 			die();
 		other.die();

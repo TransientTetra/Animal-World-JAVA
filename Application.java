@@ -6,7 +6,5 @@ public class Application
 		int height = 20;
 
 		World world = new World(width, height);
-
-		world.simulate();
 	}
 }

@@ -2,6 +2,8 @@ import java.io.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.ActionEvent;
 import java.util.Scanner;
 import java.util.Random;
@@ -13,11 +15,26 @@ public class World
 	private int width;
 	private int height;
 	public Organism organisms[];
+	private int turnNumber;
+	private int powerCounter;
 
 	World(int width, int height)
 	{
+		turnNumber = 0;
+		powerCounter = 0;
 		this.width = width;
 		this.height = height;
+
+		File log = new File("default.log");
+		log.delete();
+		try
+		{
+			addToLog("It is now turn number 0");
+		}
+		catch (IOException ioe)
+		{
+		    System.err.println(ioe);
+		}
 
 		allocOrganisms();
 		randSpawn();
@@ -49,7 +66,140 @@ public class World
 				System.exit(0);
 			}
 		});
+		save.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				try
+				{
+					saveToFile();
+				}
+				catch (IOException ex)
+				{
+					System.err.println("Caught IOException: " + ex.getMessage());
+				}
+			}
+		});
+		load.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				try
+				{
+					loadFile();
+				}
+				catch (IOException ex)
+				{
+					System.err.println("Caught IOException: " + ex.getMessage());
+				}
+				turnNumber = 0;
+				powerCounter = 0;
+				drawWorld();
+			}
+		});
+		JFrame logWindow = new JFrame("Log");
 
+		JTextArea textArea = new JTextArea(500, 300);
+		JScrollPane scrollPane = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		textArea.setEditable(false);
+
+		class updateLog implements ActionListener
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				try
+				{
+					FileReader in = new FileReader("default.log");
+					textArea.read(in, "default.log"); 
+					textArea.setCaretPosition(textArea.getDocument().getLength());
+				}
+				catch (IOException ioe)
+				{
+				    System.err.println(ioe);
+				}
+			}
+		}
+		next.addActionListener(new updateLog());
+		up.addActionListener(new updateLog());
+		down.addActionListener(new updateLog());
+		left.addActionListener(new updateLog());
+		right.addActionListener(new updateLog());
+		power.addActionListener(new updateLog());
+		load.addActionListener(new updateLog());
+
+		logWindow.add(scrollPane);
+
+		logWindow.setSize(500, 300);
+		logWindow.setVisible(true);
+		class simulateListener implements ActionListener
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				JButton source = (JButton)e.getSource();
+				String com = source.getText();
+				char input = 'i';
+				if (com.equals("NEXT"))
+					input = 'n';
+				else if (com.equals("LEFT"))
+					input = 'l';
+				else if (com.equals("RIGHT"))
+					input = 'r';
+				else if (com.equals("UP"))
+					input = 'u';
+				else if (com.equals("DOWN"))
+					input = 'd';
+				else if (com.equals("SUPERPOWER"))
+					input = 'p';
+
+				if (input == 'p' && powerCounter > 0)
+					input = 'n';
+				if (input == 'p' && powerCounter == 0)
+				{
+					powerCounter = 11;
+				}
+
+				simulate(input);
+			}
+		}
+		next.addActionListener(new simulateListener());
+		up.addActionListener(new simulateListener());
+		down.addActionListener(new simulateListener());
+		left.addActionListener(new simulateListener());
+		right.addActionListener(new simulateListener());
+		power.addActionListener(new simulateListener());
+
+
+		window.addKeyListener(new KeyListener()
+		{
+			public void keyTyped(KeyEvent e)
+			{}
+
+			public void keyPressed(KeyEvent e)
+			{
+				switch (e.getKeyCode())
+				{
+					case KeyEvent.VK_UP:
+						up.doClick();
+						break;
+					case KeyEvent.VK_DOWN:
+						down.doClick();
+						break;
+					case KeyEvent.VK_LEFT:
+						left.doClick();
+						break;
+					case KeyEvent.VK_RIGHT:
+						right.doClick();
+						break;
+				}
+			}
+
+			public void keyReleased(KeyEvent e)
+			{}
+		});
 		ui.add(exit);
 		ui.add(save);
 		ui.add(load);
@@ -64,6 +214,9 @@ public class World
 		ui.setSize(500, 300);
 		ui.setLayout(new GridLayout(0, 3, 2, 2));
 		ui.setVisible(true);
+
+		
+		drawWorld();
 	}
 
 	private void allocOrganisms()
@@ -168,7 +321,7 @@ public class World
 		}
 	}
 
-	private void drawWorld(int turnNumber)
+	private void drawWorld()
 	{
 		window.getContentPane().removeAll();
 		for (int i = 0; i < width * height; ++i)
@@ -189,9 +342,11 @@ public class World
 		window.repaint();
 	}
 
-	private char getInput()
+	public void addToLog(String text) throws IOException
 	{
-		return 'i';
+		FileWriter out = new FileWriter("default.log", true);
+		out.write(text + '\n');
+		out.close();
 	}
 
 	public void drawSingle(Point position, String path, String description)
@@ -203,92 +358,42 @@ public class World
 		window.add(label);
 	}
 
-	public void simulate()
+	public void simulate(char input)
 	{
-		int turnNumber = 0;
-		int powerCounter = 0;
-		drawWorld(turnNumber);
-		//try
-		//{
-			//loadFile();
-		//}
-		//catch (IOException e)
-		//{
-			//System.err.println("Caught IOException: " + e.getMessage());
-		//}
-
-
-		while (true)
+		sortOrganisms();
+		for (int i = 0; i < width * height; ++i)
 		{
-			char input = getInput();
-			if (input == 'i')
-				continue;
-			if (input == 'q')
-				return;
-			if (input == 's')
+			if (organisms[i] != null)
 			{
-				try
+				if (organisms[i] instanceof Human)
 				{
-					saveToFile();
+					Human h = (Human)organisms[i];
+					h.toDo(input);
+					if (powerCounter == 5)
+						h.setSuperpower(false);
 				}
-				catch (IOException e)
-				{
-					System.err.println("Caught IOException: " + e.getMessage());
-				}
-				continue;
+				organisms[i].action();
 			}
-			if (input == 'f')
-			{
-				try
-				{
-					loadFile();
-				}
-				catch (IOException e)
-				{
-					System.err.println("Caught IOException: " + e.getMessage());
-				}
-				turnNumber = 0;
-				powerCounter = 0;
-				drawWorld(turnNumber);
-				continue;
-			}
-			if (input == 'p' && powerCounter > 0)
-				input = 'n';
-			if (input == 'p' && powerCounter == 0)
-			{
-				powerCounter = 11;
-			}
-
-			sortOrganisms();
-			for (int i = 0; i < width * height; ++i)
-			{
-				if (organisms[i] != null)
-				{
-					if (organisms[i] instanceof Human)
-					{
-						Human h = (Human)organisms[i];
-						h.toDo(input);
-						if (powerCounter == 5)
-							h.setSuperpower(false);
-					}
-					organisms[i].action();
-				}
-			}
-			if (powerCounter > 0)
-				--powerCounter;
-			++turnNumber;
-
-
-			//try        
-			//{
-			    //Thread.sleep(100);
-			//} 
-			//catch(InterruptedException ex) 
-			//{
-			    //Thread.currentThread().interrupt();
-			//};
-			drawWorld(turnNumber);
 		}
+		if (powerCounter > 0)
+			--powerCounter;
+		++turnNumber;
+
+		try
+		{
+		if (powerCounter > 5)
+			addToLog(powerCounter - 5 + " turns of invincibility remaining");
+		if (powerCounter > 0 && powerCounter <= 5)
+			addToLog(powerCounter + " turns until power can be used again");
+		addToLog("It is now turn number " + turnNumber);
+		}
+		catch (IOException ex)
+		{
+			System.err.println("Caught IOException: " + ex.getMessage());
+		}
+
+
+		drawWorld();
 	}
 
 	public int getWidth()
@@ -360,6 +465,8 @@ public class World
 
 	public void loadFile() throws IOException
 	{
+		File log = new File("default.log");
+		log.delete();
 		organisms = null;
 		allocOrganisms();
 		Scanner scanner = new Scanner(new File("savefile.wsf"));

@@ -1,4 +1,5 @@
 import java.util.Random;
+import java.io.*;
 
 abstract public class Plant extends Organism
 {
@@ -26,13 +27,23 @@ abstract public class Plant extends Organism
 	@Override
 	public void fight(Organism other)
 	{
-		if (power > other.getPower())
+		try
 		{
-			other.die();
+			world.addToLog(other.species + " is trying to eat a " + species + '!');
+			if (power > other.getPower())
+			{
+				world.addToLog(other.species + " has been poisoned and died!");
+				other.die();
+			}
+			else
+			{
+				world.addToLog(other.species + " has eaten " + species + '!');
+				die();
+			}
 		}
-		else
+		catch (IOException ex)
 		{
-			die();
+			System.err.println("Caught IOException: " + ex.getMessage());
 		}
 	}
 }
